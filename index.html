@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Checkout Counter System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        .title-font,h1,h2,h3,h4,h5,h6 {
+            font-family: 'Roboto';
+        }
+        body, p,span,input,button,label {
+            font-family: 'Open Sans';
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="bg-dark text-white p-3 d-flex justify-content-between align-items-center">
+        <h3 class="m-0 flex-fill text-center">Checkout Counter System</h3>
+        <button id="adminBtn" class="btn btn-primary">Admin</button>
+    </div>
+    <div class="container my-4" id="mainPage">
+
+        <div class="card mb-3 mt-3">
+            <div class="card-body">
+                <h4>Customer Details</h4>
+                <div class="row g-2 align-items-center">
+                    <div class="col-12 col-md-auto">Name :</div>
+                    <div class="col-12 col-md-3"><input type="text" id="custName" class="form-control"></div>
+                    <div class="col-12 col-md-auto">Phone :</div>
+                    <div class="col-12 col-md-3"><input type="tel" id="custPhone" class="form-control"></div>
+                    <div class="col-12 col-md-auto">
+                        <button id="goMenu" class="btn btn-primary">Go to Menu</button>
+                    </div>
+                </div>
+                <p id="msgCustomer" class="text-danger fw-bold mt-2"></p>
+            </div>
+        </div>
+
+        <div class="card mb-3" id="menuSection" style="display:none;">
+            <div class="card-body">
+                <h4>Menu</h4>
+                <div class="container-sm">
+
+                    <div class="row align-items-center gx-1 fw-bold d-none d-md-flex border-bottom">
+                        <div class="col-md-2">Item</div>
+                        <div class="col-md-2">Price</div>
+                        <div class="col-md-2">Available</div>
+                        <div class="col-md-3 text-center">Buy Qty</div>
+                    </div>
+
+                    <div id="menuBody"></div>
+                </div>
+                <button id="calcBill" class="btn btn-primary mt-2 mb-2">Calculate Bill</button>
+                <p><b>Total:</b> Rs. <span id="total"></span></p>
+                <p><b>After Discount:</b> Rs. <span id="finalTotal"></span></p>
+                <button id="addCustomerBtn" class="btn btn-primary">Add to Counter</button>
+                <p id="msgMenu" class="text-danger fw-bold"></p>
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-body">
+                <h4 class="card-title">Counters</h4>
+                <div class="row g-3" id="counterArea"></div>
+            </div>
+        </div>
+
+        <div class="card mb-3 " id="summarySectionWrapper">
+            <div class="card-body">
+                <button id="showSummaryBtn" class="btn btn-primary">Show Summary</button>
+                <div id="summarySection" style="display:none;" class="mt-2 table-responsive">
+                    <table class="table table-bordered table-striped text-center">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Name</th> <th>Items</th> <th>Type</th> <th>Bill</th> <th>Discount</th> <th>Final Bill</th> <th>Counter</th>    
+                            </tr>
+                        </thead>
+                        <tbody id="summaryBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="container mt-5" id="adminLogin" style="display:none;">
+        <div class="card mx-auto" style="max-width:400px;">
+            <div class="card-body">
+                <h4 class="card-title text-center mb-3">Admin Login</h4>
+                <div class="mb-3">
+                    <label for="adminUser" class="form-label">Username</label>
+                    <input type="text" id="adminUser" class="form-control">
+                </div>
+                <div class="mb-3">
+                    <label for="adminPass" class="form-label">Password</label>
+                    <input type="password" id="adminPass" class="form-control">
+                </div>
+                <button id="loginAdminBtn" class="btn btn-primary w-100">Login</button>
+                <p id="adminLoginMsg" class="text-danger fw-bold mt-2 text-center"></p>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mt-5" id="adminPage" style="display:none;">
+        <div class="card mx-auto" style="max-width:400px;">
+            <div class="card-body">
+                <h4 class="card-title text-center mb-3">Admin Page</h4>
+                <div class="container-fluid px-0">
+                    <div id="adminMenu" class="table-responsive"></div>
+                </div>
+                <div class="d-flex justify-content-start mt-3">
+                    <button id="updatePricesBtn" class="btn btn-primary me-5 ">Update Prices</button>
+                    <button id="logoutAdminBtn" class="btn btn-secondary ms-5 ">Logout</button>
+                </div>
+                <p id="adminPageMsg" class="text-success fw-bold mt-2 "></p>
+            </div>
+        </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-4.0.0.js" integrity="sha256-9fsHeVnKBvqh3FB2HYu7g2xseAZ5MlN6Kz/qnkASV8U=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+       
+        class Customer {
+            constructor(name, phone) {
+                this.name = name;
+                this.phone = phone;
+                this.cart = [];
+            }
+            addItem(item, qty) {
+                if (qty > 0) this.cart.push({ item, qty });
+            }
+            calculateTotal() {
+                let sum = 0;
+                for (let i = 0; i < this.cart.length; i++) {
+                    sum += this.cart[i].item.price * this.cart[i].qty;
+                }
+                return sum;
+            }
+            listItems() {
+                let r = "";
+                for (let i = 0; i < this.cart.length; i++) {
+                    r += this.cart[i].item.name + "(" + this.cart[i].qty + ")";
+                    if (i < this.cart.length - 1) {
+                        r += ",";
+                    }
+                }
+                return r;
+            }
+        }
+
+        class Counter {
+            constructor(id, max = 3) {
+                this.id = id;
+                this.queue = [];
+                this.max = max;
+            }
+            addCustomer(c) {
+                if (this.queue.length < this.max) {
+                    this.queue.push(c);
+                    return true;
+                }
+                return false;
+            }
+            removeCustomer() {
+                return this.queue.shift();
+            }
+        }
+
+        class Checkout {
+            buildMenu(items) {
+                let display = "";
+                for (let i = 0; i < items.length; i++) {
+                     display += `
+                        <div class="row py-2  align-items-center">
+
+                            <div class="col-12 col-md-2 fw-bold">
+                                ${items[i].name}
+                            </div>
+
+                            <div class="col-6 col-md-2">
+                                <span class="d-inline d-md-none"><b>Price:</b> </span>${items[i].price}
+                            </div>
+
+                            <div class="col-6 col-md-2">
+                                <span class="d-inline d-md-none"><b>Available:</b> </span>${items[i].qty}
+                            </div>
+
+                            <div class="col-12 col-md-3">
+                                <input type="number" class="form-control" id="q${i}" placeholder="Enter  Qty">
+                            </div>
+
+                        </div>`;
+                }
+                $("#menuBody").html(display);
+            }
+            buildCounters(counters) {
+                let display = "<div class='row g-3 my-3'>";
+                for (let i = 0; i < counters.length; i++) {
+                    display +=
+                        "<div class='col-sm-12 col-md-6 col-lg-4'>" +
+                        "<div class='card p-3'>" +
+                        "<h5 class='text-center bg-dark text-white py-2 mb-3 rounded'>Counter " + counters[i].id + "</h5>" +
+                        "<ul id='queue" + counters[i].id + "' class='list-unstyled mb-3'></ul>" + 
+                        "<div class='mt-3'>" +
+                        "<button class='btn btn-primary' onclick='billingDone(" + counters[i].id + ")'>Billing Done</button>" +
+                        "</div></div></div>";
+                }
+                display += "</div>";
+                $("#counterArea").html(display);
+            }
+
+            updateQueues(counters) {
+                for (let i = 0; i < counters.length; i++) {
+                    let ul = $("#queue" + counters[i].id);
+                    ul.html("");
+                    let q = counters[i].queue;
+                    for (let j = 0; j < q.length; j++) {
+                        ul.append("<li class=' me-2'>" + (j + 1) + ". " + q[j].name + "</li>");
+                    }
+                }
+            }
+        }
+
+        let items = [
+            { name: "Apple", price: 50, qty: 100 },
+            { name: "Orange", price: 30, qty: 100 },
+            { name: "Carrot", price: 20, qty: 100 },
+            { name: "Beetroot", price: 25, qty: 100 },
+            { name: "Chocolate", price: 80, qty: 100 },
+            { name: "Icecream", price: 60, qty: 100 }
+        ];
+
+        let counters = [new Counter(1), new Counter(2), new Counter(3)];
+        let checkout = new Checkout();
+        checkout.buildMenu(items);
+        checkout.buildCounters(counters);
+
+        let currentCustomer = null;
+        let customerHistory = [];
+        let allBills = [];
+
+        $("#goMenu").click(function () {
+            let n = $("#custName").val().trim();
+            let p = $("#custPhone").val().trim();
+            if (!n || !p) {
+                $("#msgCustomer").text("Enter customer details");
+                return;
+            }
+            $("#msgCustomer").text("");
+            currentCustomer = new Customer(n, p);
+            $("#menuSection").show(); 
+            $("#summarySection").hide();
+        });
+
+        $("#calcBill").click(function () {
+            if (!currentCustomer) {
+                $("#msgMenu").text("Enter customer details first");
+                return;
+            }
+            currentCustomer.cart = [];
+            $("#msgMenu").text("");
+            for (let i = 0; i < items.length; i++) {
+                let qty = Number($("#q" + i).val()) || 0;
+
+                if (qty < 0) {
+                      $("#msgMenu").text("Enter positive values only");
+                      return; 
+                }
+                if (qty > items[i].qty) {
+                    $("#msgMenu").text("Out of stock: " + items[i].name);
+                    return;
+                }
+                currentCustomer.addItem(items[i], qty);
+            }
+            let total = currentCustomer.calculateTotal();
+            $("#total").text(total);
+            $("#finalTotal").text(total);
+        });
+
+
+        $("#addCustomerBtn").click(function () {
+            let min = counters[0];
+            for (let i = 1; i < counters.length; i++) {
+                if (counters[i].queue.length < min.queue.length) min = counters[i];
+            }
+
+            if (!min.addCustomer(currentCustomer)) {
+                $("#msgMenu").text("All counters full");
+                return;
+            }
+
+            for (let i = 0; i < currentCustomer.cart.length; i++) {
+                currentCustomer.cart[i].item.qty -= currentCustomer.cart[i].qty;
+            }
+
+            checkout.buildMenu(items);
+            checkout.updateQueues(counters);
+
+            $("#menuSection").hide();
+            $("#custName").val("");
+            $("#custPhone").val("");
+            $("#summarySection").hide();
+    
+            for (let i = 0; i < items.length; i++) {
+                $("#q" + i).val("");
+            }
+
+            $("#total").text("");
+            $("#finalTotal").text("");
+
+            $("#msgMenu").text("");
+           
+               currentCustomer = null;
+            });
+
+           $("#showSummaryBtn").click(function () {
+              $("#summarySection").show();
+           });
+
+          function billingDone(id) {
+            let counter = counters[id - 1];
+            let cust = counter.removeCustomer();
+            if (!cust) return;
+
+            let bill = cust.calculateTotal();
+            allBills.push(bill);
+
+            let sum = 0;
+            for (let i = 0; i < allBills.length; i++) {
+                sum += allBills[i];
+            }
+            let avg = sum / allBills.length;
+
+            
+            let existing = null;
+            for (let i = 0; i < customerHistory.length; i++) {
+                if (customerHistory[i].name === cust.name && customerHistory[i].phone === cust.phone) {
+                    existing = customerHistory[i];
+                    break;
+                }
+            }
+
+            let type = "Regular";
+
+            if (!existing) {
+                customerHistory.push({
+                    name: cust.name,
+                    phone: cust.phone,
+                    type: "Regular"
+                });
+            } else {
+                if (bill > avg) {
+                    existing.type = "VIP";
+                    type = "VIP";
+                } else {
+                    existing.type = "Regular";
+                    type = "Regular";
+                }
+            }
+
+            let discount = 0;
+            let finalBill = bill;
+
+            if (type === "VIP") {
+                discount = bill * 10 / 100;
+                finalBill = bill - discount;
+            }
+
+            let display = "<tr>" +
+                          "<td>" + cust.name + "</td>" +
+                          "<td>" + cust.listItems() + "</td>" +
+                          "<td>" + type + "</td>" +
+                          "<td>" + bill + "</td>" +
+                          "<td>" + discount + "</td>" +
+                          "<td>" + finalBill + "</td>" +
+                          "<td>" + counter.id + "</td>" +
+                          "</tr>";
+
+            $("#summaryBody").append(display);
+            checkout.updateQueues(counters);
+
+            $("#summarySection").hide();
+        }
+        function buildAdminMenu() {
+           
+            let display = `<div class="row fw-bold border-bottom pb-2 mb-2">
+                             <div class="col-6 col-md-6">Items</div>
+                             <div class="col-6 col-md-6">Set Price</div>
+                           </div>`;
+            
+            for (let i = 0; i < items.length; i++) {
+                display += `<div class="row py-1 align-items-center">
+                                 <div class="col-6 col-md-6">${items[i].name}</div>
+                                 <div class="col-6 col-md-6">
+                                     <input type="number" class="form-control text-center" id="p${i}" value="${items[i].price}">
+                                 </div>
+                             </div>`;
+            }
+
+            $("#adminMenu").html(display);
+        }
+    
+    $("#adminBtn").click(function () {
+    $("#adminUser").val("");
+    $("#adminPass").val("");
+    $("#adminLoginMsg").text("");
+
+    $("#mainPage").hide();      
+    $("#adminLogin").show();   
+    $("#adminBtn").hide();   
+});
+
+$("#loginAdminBtn").click(function () {
+    var username = $("#adminUser").val().trim();
+    var password = $("#adminPass").val().trim();
+    if (username === "admin" && password === "1234") {
+        $("#adminLogin").hide(); 
+        $("#mainPage").hide();   
+        $("#adminPage").show(); 
+        $("#adminBtn").hide();   
+
+        $("#adminPageMsg").text("");
+
+        buildAdminMenu(); 
+    } else {
+        $("#adminLoginMsg").text("Invalid Username/Password");
+    }
+});
+
+        $("#logoutAdminBtn").click(function () {
+              $("#adminPage").hide();
+              $("#mainPage").show();
+              $("#adminBtn").show();  
+              $("#summarySection").hide(); 
+              $("#adminPageMsg").text("");
+});
+
+        $("#updatePricesBtn").click(function () {
+            for (let i = 0; i < items.length; i++) {
+                items[i].price = Number($("#p" + i).val());
+            }
+            checkout.buildMenu(items);
+            $("#adminPageMsg").text("Prices are updated").addClass("text-success");
+        });
+    </script>
+
+</body>
+
+</html>
